@@ -26,8 +26,8 @@ import java.util.Map;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final static String ACCOUNT_SID = "ACcf820ee0c53043c3b0cc092c9e138c4d";
-    private final static String AUTH_TOKEN = "dc1911ae00029a5e4b4316add054d1da";
+    private final static String ACCOUNT_SID = "";
+    private final static String AUTH_TOKEN = "";
 
     @Autowired
     UserService userService;
