@@ -5,11 +5,13 @@ import com.sfuit.Auth.exceptions.EtAuthException;
 
 public interface UserRepository {
 
-    Integer create(String email, String name, String password, String dob, String phone, String otp, String is_verified) throws EtAuthException;
+    Integer create(String email, String name, String dob, String phone, String otp, String is_verified, String token) throws EtAuthException;
 
-    User findByEmailAndPassword(String email, String password) throws EtAuthException;
+    User findByPhoneandOTP(String phone, String otp) throws EtAuthException;
 
     Integer getCountByEmail(String email);
 
     User findById(Integer userId);
+
+    Integer getCountByPhone(String phone);
 }

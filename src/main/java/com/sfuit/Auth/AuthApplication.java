@@ -13,6 +13,7 @@ public class AuthApplication {
 		SpringApplication.run(AuthApplication.class, args);
 	}
 
+
 	@Bean
 	public FilterRegistrationBean<AuthFilter> filterFilterRegistrationBean()
 	{

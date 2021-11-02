@@ -17,28 +17,34 @@ public class UserServiceImplement implements UserService{
     UserRepository userRepository;
 
     @Override
-    public User validateUser(String email, String password) throws EtAuthException
+    public User validateUser(String phone, String otp) throws EtAuthException
     {
-        if(email != null) email = email.toLowerCase();
-        return userRepository.findByEmailAndPassword(email, password);
+        return userRepository.findByPhoneandOTP(phone, otp);
     }
 
     @Override
-    public User registerUser(String email, String name, String password, String dob, String phone, String otp, String is_verified) throws EtAuthException {
+    public User registerUser(String email, String name, String dob, String phone, String otp, String is_verified, String token) throws EtAuthException {
 
         Pattern pattern = Pattern.compile("^(.+)@(.+)$");
+        Pattern phone_pattern = Pattern.compile("^?[5-9][0-9]{9}$");
         if(email != null) email = email.toLowerCase();
         if(!pattern.matcher(email).matches())
             throw new EtAuthException("Invalid email format");
+        if(!phone_pattern.matcher(phone).matches())
+            throw new EtAuthException("Invalid phone number format");
         //Now, checking whether is already present in db or not,
         //for that, we are using getCountByEMail method declared in repo
         //if count> 0, email exists, cannot register again
 
-        Integer count = userRepository.getCountByEmail(email);
+        Integer count_email = userRepository.getCountByEmail(email);
+        Integer count_phone = userRepository.getCountByPhone(phone);
 
-        if(count>0)
+
+        if(count_email>0)
             throw new EtAuthException("Email already in use");
-        Integer userId = userRepository.create(email, name, password, dob, phone, otp, is_verified);
+        if(count_phone>0)
+            throw new EtAuthException("Phone number already in use");
+        Integer userId = userRepository.create(email, name, dob, phone, otp, is_verified, token);
         return userRepository.findById(userId);
     }
 }

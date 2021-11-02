@@ -5,21 +5,21 @@ public class User {
     private Integer userId;
     private String email;
     private String name;
-    private String password;
+    private String token;
     private String dob;
     private String phone;
     private String otp;
     private String is_verified;
 
-    public User(Integer userId, String email, String name, String password, String dob, String phone, String otp, String is_verified) {
+    public User(Integer userId, String email, String name, String dob, String phone, String otp, String is_verified, String token) {
         this.userId = userId;
         this.email = email;
         this.name = name;
-        this.password = password;
         this.dob = dob;
         this.phone = phone;
         this.otp = otp;
         this.is_verified = is_verified;
+        this.token = token;
     }
 
     public Integer getUserId() {
@@ -46,12 +46,12 @@ public class User {
         this.name = name;
     }
 
-    public String getPassword() {
-        return password;
+    public String getToken() {
+        return token;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setToken(String password) {
+        this.token = password;
     }
 
     public String getDob() {
