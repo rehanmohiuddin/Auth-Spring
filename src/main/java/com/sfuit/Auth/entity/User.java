@@ -3,23 +3,27 @@ package com.sfuit.Auth.entity;
 public class User {
 
     private Integer userId;
-    private String email;
     private String name;
-    private String token;
+    private String email;
     private String dob;
     private String phone;
+    private String password;
     private String otp;
+    private String token;
     private String is_verified;
+    private String device_id;
 
-    public User(Integer userId, String email, String name, String dob, String phone, String otp, String is_verified, String token) {
+    public User(Integer userId, String name, String email, String dob, String phone, String password, String otp, String token, String is_verified, String device_id) {
         this.userId = userId;
-        this.email = email;
         this.name = name;
+        this.email = email;
         this.dob = dob;
         this.phone = phone;
+        this.password = password;
         this.otp = otp;
-        this.is_verified = is_verified;
         this.token = token;
+        this.is_verified = is_verified;
+        this.device_id = device_id;
     }
 
     public Integer getUserId() {
@@ -28,6 +32,14 @@ public class User {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public String getDevice_id() {
+        return device_id;
+    }
+
+    public void setDevice_id(String device_id) {
+        this.device_id = device_id;
     }
 
     public String getEmail() {
@@ -68,6 +80,14 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getOtp() {

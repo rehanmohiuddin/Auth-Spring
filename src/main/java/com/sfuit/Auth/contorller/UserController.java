@@ -4,10 +4,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.sfuit.Auth.Constants;
 import com.sfuit.Auth.entity.User;
+import com.sfuit.Auth.services.EmailSenderService;
 import com.sfuit.Auth.services.UserService;
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -22,59 +20,63 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-
 @RequestMapping("/api/users")
-public class UserController {
 
-    private final static String ACCOUNT_SID = "";
-    private final static String AUTH_TOKEN = "";
+public class UserController{
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    EmailSenderService emailSenderService;
+
     @Value("${jwt.secret}")
     private String secret;
+
     @PostMapping("/login")
     public ResponseEntity<Map<String, String >> loginUser(@RequestBody Map<String, Object> userMap)
     {
 
-        String phone = (String) userMap.get("phone");
-        String otp = (String) userMap.get("otp");
-        User user = userService.validateUser(phone, otp);
-        return new ResponseEntity<>(generateJWTToken(user), HttpStatus.OK);
+        String email = (String) userMap.get("email");
+        String password = (String) userMap.get("password");
+        User user = userService.validateUser(email, password);
+        return new ResponseEntity<>(generateLoginJWTToken(user), HttpStatus.OK);
     }
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> registerUser(@RequestBody Map<String, Object> userMap)
     {
-        int min = 1000;
-        int max = 9999;
-        int random_num = (int)Math.floor(Math.random()*(max-min+1)+min);
-
-        String email = (String) userMap.get("email");
         String name = (String) userMap.get("name");
+        String email = (String) userMap.get("email");
         String dob = (String) userMap.get("dob");
         String phone = (String) userMap.get("phone");
-        String otp = Integer.toString(random_num);
-        String is_verified = (String) userMap.get("is_verified");
-
-        Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
-        Message message = Message.creator(
-                new PhoneNumber("+919381596810"),
-                new PhoneNumber("+14195065758"),
-                "Your 4-digit otp is \n" + otp +"\n valid for 5 minutes only")
-                .create();
+        String password = (String) userMap.get("password");
+        String otp = Integer.toString(rand_otp());
 
         Algorithm algorithm = Algorithm.HMAC256(Constants.API_SECRET_KEY);
         String token = JWT.create()
                 .withIssuer("auth0")
-                .withClaim("email",email)
                 .withClaim("name",name)
+                .withClaim("email",email)
                 .withClaim("dob",dob)
                 .withClaim("phone",phone)
+                .withClaim("password",password)
                 .withExpiresAt(new Date(System.currentTimeMillis() + Constants.TOKEN_VALIDITY))
                 .sign(algorithm);
 
-        User user= userService.registerUser(email, name, dob, phone, otp, is_verified, token);
+        String is_verified = "false";
+        String device_id  = (String) userMap.get("device_id");
+        User user= userService.registerUser(name, email, dob, phone, password, otp, token, is_verified, device_id);
+        triggerMail(email, name, otp);
+        return new ResponseEntity<>(generateJWTToken(user), HttpStatus.OK);
+    }
+
+    @PostMapping("/verification")
+    public ResponseEntity<Map<String, String>> verifyUser(@RequestBody Map<String, Object> userMap)
+    {
+        String email = (String) userMap.get("email");
+        String otp = (String) userMap.get("otp");
+        User user = userService.verifyUser(email, otp);
         return new ResponseEntity<>(generateJWTToken(user), HttpStatus.OK);
     }
 
@@ -90,10 +92,52 @@ public class UserController {
                     .withClaim("name",user.getName())
                     .withClaim("dob",user.getDob())
                     .withClaim("phone",user.getPhone())
+                    .withClaim("password",user.getPassword())
                     .withExpiresAt(new Date(System.currentTimeMillis() + Constants.TOKEN_VALIDITY))
                     .sign(algorithm);
 
             map.put("token", token);
             return map;
+    }
+
+    private Map<String, String > generateLoginJWTToken(User user)
+    {
+
+        Map<String, String> map = new HashMap<>();
+        Algorithm algorithm = Algorithm.HMAC256(Constants.API_SECRET_KEY);
+        String token = JWT.create()
+                .withIssuer("auth0")
+                .withClaim("email",user.getEmail())
+                .withClaim("name",user.getName())
+                .withClaim("dob",user.getDob())
+                .withClaim("phone",user.getPhone())
+                .withClaim("password",user.getPassword())
+                .withIssuedAt(new Date((System.currentTimeMillis())))
+                .withExpiresAt(new Date(System.currentTimeMillis() + Constants.UPDATED_TOKEN_VALIDITY))
+                .sign(algorithm);
+
+        //Token token_updated = userService.addToken(user.getEmail(), token, user.getDevice_id());
+
+        map.put("name",user.getName());
+        map.put("email",user.getEmail());
+        map.put("dob",user.getDob());
+        map.put("phone", user.getPhone());
+        map.put("device_id", user.getDevice_id());
+        map.put("token", token);
+        return map;
+    }
+
+    //generating random 4 digit otp
+    private int rand_otp()
+    {
+        int min = 1000;
+        int max = 9999;
+        return ((int)Math.floor(Math.random()*(max-min+1)+min));
+    }
+
+
+    public void triggerMail(String email, String name, String otp)
+    {
+        emailSenderService.sendSimpleEmail(email, "Hi "+name+"\n"+otp+"This is your otp \n Valid for 5 minutes only", "OTP Verification");
     }
 }

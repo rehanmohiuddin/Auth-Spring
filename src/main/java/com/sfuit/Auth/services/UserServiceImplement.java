@@ -1,5 +1,6 @@
 package com.sfuit.Auth.services;
 
+import com.sfuit.Auth.entity.Token;
 import com.sfuit.Auth.entity.User;
 import com.sfuit.Auth.exceptions.EtAuthException;
 import com.sfuit.Auth.repository.UserRepository;
@@ -17,13 +18,14 @@ public class UserServiceImplement implements UserService{
     UserRepository userRepository;
 
     @Override
-    public User validateUser(String phone, String otp) throws EtAuthException
+    public User validateUser(String email, String password) throws EtAuthException
     {
-        return userRepository.findByPhoneandOTP(phone, otp);
+        if(email != null) email = email.toLowerCase();
+        return userRepository.findByEmailandPassword(email, password);
     }
 
     @Override
-    public User registerUser(String email, String name, String dob, String phone, String otp, String is_verified, String token) throws EtAuthException {
+    public User registerUser(String name, String email, String dob, String phone, String password, String otp, String token, String is_verified, String device_id) throws EtAuthException {
 
         Pattern pattern = Pattern.compile("^(.+)@(.+)$");
         Pattern phone_pattern = Pattern.compile("^?[5-9][0-9]{9}$");
@@ -44,7 +46,22 @@ public class UserServiceImplement implements UserService{
             throw new EtAuthException("Email already in use");
         if(count_phone>0)
             throw new EtAuthException("Phone number already in use");
-        Integer userId = userRepository.create(email, name, dob, phone, otp, is_verified, token);
+        Integer userId = userRepository.create(name, email, dob, phone, password, otp, token, is_verified, device_id);
         return userRepository.findById(userId);
+    }
+
+    @Override
+    public User verifyUser(String email, String otp) {
+        if(email != null) email = email.toLowerCase();
+        return userRepository.findByEmailandOTP(email, otp);
+    }
+
+    @Override
+    public Token addToken(String email, String token, String device_id) {
+
+        if(email != null) email = email.toLowerCase();
+
+        Integer tokenId = userRepository.addUpdatedToken(email, token, device_id);
+        return userRepository.findByEmail(email);
     }
 }
